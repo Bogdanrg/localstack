@@ -9,6 +9,7 @@ services:
       - "127.0.0.1:4510-4559:4510-4559"
     environment:
       - DEBUG=0
+      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=20
       - PROVIDER_OVERRIDE_LAMBDA=asf
       - DOCKER_HOST=unix:///var/run/docker.sock
       - LOCALSTACK_HOSTNAME=localstack
