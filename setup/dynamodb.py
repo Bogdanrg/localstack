@@ -29,17 +29,17 @@ def json_datetime_serializer(obj):
     raise TypeError("Type %s not serializable" % type(obj))
 
 
-def create_dynamodb_table(table_name):
+def create_user_table():
     try:
         response = dynamodb_client.create_table(
-            TableName=table_name,
+            TableName='users',
             KeySchema=[
                 {
                     'AttributeName': 'Name',
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'Email',
+                    'AttributeName': 'Password',
                     'KeyType': 'RANGE'
                 }
             ],
@@ -49,7 +49,7 @@ def create_dynamodb_table(table_name):
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'Email',
+                    'AttributeName': 'Password',
                     'AttributeType': 'S'
                 }
             ],
@@ -71,7 +71,7 @@ def create_dynamodb_table(table_name):
         return response
 
 
-def index_dynamo_db_table(table_name):
+def index_user_table():
     try:
         response = dynamodb_client.update_table(
             AttributeDefinitions=[
@@ -80,7 +80,7 @@ def index_dynamo_db_table(table_name):
                     'AttributeType': 'S'
                 },
             ],
-            TableName=table_name,
+            TableName='users',
             GlobalSecondaryIndexUpdates=[
                 {
                     'Create': {
@@ -109,14 +109,54 @@ def index_dynamo_db_table(table_name):
         return response
 
 
+def create_post_table():
+    try:
+        response = dynamodb_client.create_table(
+            TableName="posts",
+            KeySchema=[
+                {
+                    'AttributeName': 'Title',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'Username',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'Title',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'Username',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 1,
+                'WriteCapacityUnits': 1
+            },
+        )
+    except ClientError:
+        logger.exception('Could not create the table.')
+        raise
+    else:
+        return response
+
+
 def main():
-    table_name = 'users'
     logger.info('Creating a DynamoDB table...')
-    dynamodb_table = create_dynamodb_table(table_name)
+    dynamodb_table = create_user_table()
     logger.info(
         f'DynamoDB table created: {json.dumps(dynamodb_table, indent=4, default=json_datetime_serializer)}')
     logger.info('Indexing table...')
-    response = index_dynamo_db_table(table_name)
+    response = index_user_table()
+    logger.info(response)
+    logger.info('Creating a DynamoDB table...')
+    dynamodb_table = create_post_table()
+    logger.info(
+        f'DynamoDB table created: {json.dumps(dynamodb_table, indent=4, default=json_datetime_serializer)}')
     logger.info(response)
 
 
