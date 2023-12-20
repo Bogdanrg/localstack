@@ -13,13 +13,14 @@ dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_ENDPOINT)
 
 def handler(event, context=None):
     print(event)
-    data = json.loads(event['body'])
     table = dynamodb.Table("users")
-    if event['requestContext']['http']['method'] == 'GET':
-        response = process_get(data, table)
-        return response
-    elif event['requestContext']['http']['method'] == 'POST':
+    if type(event) == dict:
+        data = json.loads(event['body'])
         response = process_post(data, table)
+        return response
+    else:
+        data = json.loads(event)
+        response = process_get(data, table)
         return response
 
 
@@ -59,7 +60,7 @@ def process_get(data, table):
             'Password': data['password']
         }
     )
-    if not result['Item']:
+    if not result.get('Item'):
         return {
             "isAuthorized": False,
             "context": {

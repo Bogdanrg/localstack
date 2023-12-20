@@ -1,0 +1,2 @@
+awslocal lambda create-function --runtime python3.11 --zip-file fileb://auth.zip --function-name auth --handler localstack.lambdas.authorizer.handler --role arn:aws:iam::000000000000:role/lambda-role
+awslocal lambda create-function-url-config --function-name auth --auth-type NONE

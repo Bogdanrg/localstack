@@ -13,19 +13,29 @@ client = boto3.client('lambda')
 
 def get(event, context):
     table = dynamodb.Table("posts")
+    data = json.loads(event['body'])
     response = client.invoke(
         FunctionName='auth',
         InvocationType='RequestResponse',
-        Payload=event
+        Payload=json.dumps(event['body'])
     )
-    print(response)
-    if not response['isAuthorized']:
+    response_payload = json.load(response['Payload'])
+    print(response_payload)
+    if not response_payload.get('isAuthorized'):
         return {
-            "statusCode": 500
+            "statusCode": 500,
+            "reason": "Access denied"
         }
-    response = {
+    result = table.get_item(
+        Key={
+            'Username': data['name'],
+            'Title': data['title']
+        }
+    )
+    return {
         "statusCode": 200,
-        "body": "Ok"
+        "context":
+            {
+                "item": result["Item"]
+            }
     }
-
-    return response
