@@ -109,6 +109,52 @@ def index_user_table():
         return response
 
 
+def index_post_table():
+    try:
+        response = dynamodb_client.update_table(
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'Title',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'Username',
+                    'AttributeType': 'S'
+                }
+            ],
+            TableName='posts',
+            GlobalSecondaryIndexUpdates=[
+                {
+                    'Create': {
+                        'IndexName': 'PostsIndex',
+                        'KeySchema': [
+                            {
+                                'AttributeName': 'Title',
+                                'KeyType': 'HASH'
+                            },
+                            {
+                                'AttributeName': 'Username',
+                                'KeyType': 'RANGE'
+                            }
+                        ],
+                        'Projection': {
+                            'ProjectionType': 'ALL'
+                        },
+                        'ProvisionedThroughput': {
+                            'ReadCapacityUnits': 1,
+                            'WriteCapacityUnits': 1
+                        }
+                    }
+                }
+            ]
+        )
+    except ClientError:
+        logger.exception('Could not index the table.')
+        raise
+    else:
+        return response
+
+
 def create_post_table():
     try:
         response = dynamodb_client.create_table(
@@ -157,6 +203,9 @@ def main():
     dynamodb_table = create_post_table()
     logger.info(
         f'DynamoDB table created: {json.dumps(dynamodb_table, indent=4, default=json_datetime_serializer)}')
+    logger.info(response)
+    logger.info('Indexing table...')
+    response = index_post_table()
     logger.info(response)
 
 
