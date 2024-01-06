@@ -1,19 +1,19 @@
 import json
 import logging
+import os
+
 import boto3
-from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
-DYNAMODB_ENDPOINT = "http://localstack:4566"
-dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_ENDPOINT)
+dynamodb = boto3.resource('dynamodb', endpoint_url=os.environ.get("DYNAMODB_URL"))
 client = boto3.client('lambda')
 
 
 def delete(event, context):
-    table = dynamodb.Table("posts")
+    table = dynamodb.Table(os.environ.get("POST_TABLE"))
     data = json.loads(event['body'])
     response = client.invoke(
         FunctionName='auth',
@@ -21,24 +21,50 @@ def delete(event, context):
         Payload=json.dumps(event['body'])
     )
     response_payload = json.load(response['Payload'])
-    print(response_payload)
     if not response_payload.get('isAuthorized'):
         return {
-            "statusCode": 500,
-            "reason": "Access denied"
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'success': False,
+                'reason': 'Access denied'
+            }),
+            "isBase64Encoded": False
         }
-    try:
-        table.delete_item(
-            key={
-                "Title": data["title"],
-                "Username": data["name"]
-            }
-        )
+    response = table.delete_item(
+        Key={
+            "Code": data["code"],
+            "Username": data["name"]
+        },
+        ReturnValues='ALL_OLD'
+    )
+    if response.get("Attributes"):
         return {
-            "deleted": True,
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'success': True,
+                'context': {
+                    "item": response["Attributes"]
+                }
+            }),
+            "isBase64Encoded": False
         }
-    except ClientError as err:
-        return {
-            "deleted": False,
-            "reason": err.response["Error"]["Message"]
-        }
+    return {
+        'statusCode': 500,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({
+            'success': False,
+            'reason': "Not found"
+        }),
+        "isBase64Encoded": False
+    }

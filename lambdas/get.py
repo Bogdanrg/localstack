@@ -1,18 +1,19 @@
 import json
 import logging
+import os
+
 import boto3
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
-DYNAMODB_ENDPOINT = "http://localstack:4566"
-dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_ENDPOINT)
+dynamodb = boto3.resource('dynamodb', endpoint_url=os.environ.get("DYNAMODB_URL"))
 client = boto3.client('lambda')
 
 
 def get(event, context):
-    table = dynamodb.Table("posts")
+    table = dynamodb.Table(os.environ.get("POST_TABLE"))
     data = json.loads(event['body'])
     response = client.invoke(
         FunctionName='auth',
@@ -20,22 +21,51 @@ def get(event, context):
         Payload=json.dumps(event['body'])
     )
     response_payload = json.load(response['Payload'])
-    print(response_payload)
     if not response_payload.get('isAuthorized'):
         return {
-            "statusCode": 500,
-            "reason": "Access denied"
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'success': False,
+                'reason': 'Access denied'
+            }),
+            "isBase64Encoded": False
         }
     result = table.get_item(
         Key={
             'Username': data['name'],
-            'Title': data['title']
+            'Code': data['code']
         }
     )
+    if result.get('Item'):
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'success': True,
+                'context': {
+                    "item": result["Item"]
+                }
+            }),
+            "isBase64Encoded": False
+        }
     return {
-        "statusCode": 200,
-        "context":
-            {
-                "item": result["Item"]
-            }
+        'statusCode': 500,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({
+            'success': False,
+            'reason': 'Not found'
+        }),
+        "isBase64Encoded": False
     }
+
+

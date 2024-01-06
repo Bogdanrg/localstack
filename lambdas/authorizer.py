@@ -1,19 +1,18 @@
 import json
 import logging
 import boto3
+import os
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
-DYNAMODB_ENDPOINT = "http://localstack:4566"
-dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_ENDPOINT)
+dynamodb = boto3.resource('dynamodb', endpoint_url=os.environ.get("DYNAMODB_URL"))
 
 
 def handler(event, context=None):
-    print(event)
-    table = dynamodb.Table("users")
+    table = dynamodb.Table(os.environ.get("USER_TABLE"))
     if type(event) == dict:
         data = json.loads(event['body'])
         response = process_post(data, table)

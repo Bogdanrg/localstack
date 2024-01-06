@@ -1,19 +1,20 @@
 import json
 import logging
+import os
+from copy import deepcopy
+
 import boto3
-from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
-DYNAMODB_ENDPOINT = "http://localstack:4566"
-dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_ENDPOINT)
+dynamodb = boto3.resource('dynamodb', endpoint_url=os.environ.get("DYNAMODB_URL"))
 client = boto3.client('lambda')
 
 
 def put(event, context):
-    table = dynamodb.Table("posts")
+    table = dynamodb.Table(os.environ.get("POST_TABLE"))
     data = json.loads(event['body'])
     response = client.invoke(
         FunctionName='auth',
@@ -21,28 +22,55 @@ def put(event, context):
         Payload=json.dumps(event['body'])
     )
     response_payload = json.load(response['Payload'])
-    print(response_payload)
     if not response_payload.get('isAuthorized'):
         return {
-            "statusCode": 500,
-            "reason": "Access denied"
-        }
-    new_post = data
-    new_post.pop('name')
-    new_post.pop('password')
-    try:
-        table.update_item(
-            Key={
-                'Title': new_post['title'],
-                'Username': new_post['name']
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
             },
-            AttributeUpdates=new_post
-        )
-        return {
-            "updated": True,
+            'body': json.dumps({
+                'success': False,
+                'reason': 'Access denied'
+            }),
+            "isBase64Encoded": False
         }
-    except ClientError as err:
+    new_post = deepcopy(data)
+    new_post.pop('name')
+    new_post.pop('code')
+    new_post.pop('password')
+    response = table.update_item(
+        Key={
+            'Code': data['code'],
+            'Username': data['name']
+        },
+        AttributeUpdates=new_post,
+        ReturnValues='ALL_NEW'
+    )
+    if response.get("Attributes"):
         return {
-            "updated": False,
-            "reason": err.response["Error"]["Message"]
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'success': True,
+                'context': {
+                    "item": response["Attributes"]
+                }
+            }),
+            "isBase64Encoded": False
         }
+    return {
+        'statusCode': 500,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({
+            'success': False,
+            'reason': 'Not Found'
+        }),
+        "isBase64Encoded": False
+    }

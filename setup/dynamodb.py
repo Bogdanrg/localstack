@@ -114,7 +114,7 @@ def index_post_table():
         response = dynamodb_client.update_table(
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'Title',
+                    'AttributeName': 'Code',
                     'AttributeType': 'S'
                 },
                 {
@@ -129,7 +129,7 @@ def index_post_table():
                         'IndexName': 'PostsIndex',
                         'KeySchema': [
                             {
-                                'AttributeName': 'Title',
+                                'AttributeName': 'Code',
                                 'KeyType': 'HASH'
                             },
                             {
@@ -161,7 +161,7 @@ def create_post_table():
             TableName="posts",
             KeySchema=[
                 {
-                    'AttributeName': 'Title',
+                    'AttributeName': 'Code',
                     'KeyType': 'HASH'
                 },
                 {
@@ -171,7 +171,7 @@ def create_post_table():
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'Title',
+                    'AttributeName': 'Code',
                     'AttributeType': 'S'
                 },
                 {
