@@ -1,4 +1,4 @@
-awslocal lambda create-function --runtime python3.11 --zip-file fileb://auth.zip --function-name auth --handler lambdas.authorizer.handler --role arn:aws:iam::000000000000:role/lambda-role --environment Variables={DYNAMODB_URL=http://localstack:4566,USER_TABLE=users,POST_TABLE=posts}
+awslocal lambda create-function --runtime python3.11 --zip-file fileb://auth.zip --function-name auth --handler lambdas.authorizer.handler --role arn:aws:iam::000000000000:role/lambda-role --environment Variables={DYNAMODB_URL=http://localstack:4566,USER_TABLE=users,FOOD_TABLE=food}
 awslocal lambda create-function-url-config --function-name auth --auth-type NONE
 awslocal apigateway create-rest-api --name 'crud'
 awslocal apigateway get-resources --rest-api-id <REST_API_ID>

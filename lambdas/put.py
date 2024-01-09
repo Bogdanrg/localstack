@@ -14,7 +14,7 @@ client = boto3.client('lambda')
 
 
 def put(event, context):
-    table = dynamodb.Table(os.environ.get("POST_TABLE"))
+    table = dynamodb.Table(os.environ.get("FOOD_TABLE"))
     data = json.loads(event['body'])
     response = client.invoke(
         FunctionName='auth',

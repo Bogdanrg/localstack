@@ -14,7 +14,7 @@ client = boto3.client('lambda')
 
 
 def create(event, context):
-    table = dynamodb.Table(os.environ.get("POST_TABLE"))
+    table = dynamodb.Table(os.environ.get("FOOD_TABLE"))
     data = json.loads(event['body'])
     response = client.invoke(
         FunctionName='auth',
@@ -35,14 +35,19 @@ def create(event, context):
             }),
             "isBase64Encoded": False
         }
-    post = {
-        "Code": data["code"],
-        "Title": data["title"],
-        "Username": data["name"],
-        "Content": data["content"]
+    year_food_production = {
+        "Entity": data["entity"],
+        "Year": data["year"],
+        "Maize": data["maize"],
+        "Rice": data["rice"],
+        "Yams": data["yams"],
+        "Wheat": data["wheat"],
+        "Tomatoes": data["tomatoes"],
+        "Tea": data["tea"],
+        "Potatoes": data["potatoes"]
     }
     try:
-        table.put_item(Item=post)
+        table.put_item(Item=year_food_production)
         return {
             'statusCode': 200,
             'headers': {

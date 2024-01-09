@@ -79,6 +79,10 @@ def index_user_table():
                     'AttributeName': 'Name',
                     'AttributeType': 'S'
                 },
+                {
+                    'AttributeName': 'Password',
+                    'AttributeType': 'S'
+                }
             ],
             TableName='users',
             GlobalSecondaryIndexUpdates=[
@@ -89,6 +93,10 @@ def index_user_table():
                             {
                                 'AttributeName': 'Name',
                                 'KeyType': 'HASH'
+                            },
+                            {
+                                'AttributeName': 'Password',
+                                'KeyType': 'RANGE'
                             }
                         ],
                         'Projection': {
@@ -114,26 +122,26 @@ def index_post_table():
         response = dynamodb_client.update_table(
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'Code',
+                    'AttributeName': 'Entity',
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'Username',
-                    'AttributeType': 'S'
+                    'AttributeName': 'Year',
+                    'AttributeType': 'N'
                 }
             ],
-            TableName='posts',
+            TableName='food',
             GlobalSecondaryIndexUpdates=[
                 {
                     'Create': {
-                        'IndexName': 'PostsIndex',
+                        'IndexName': 'FoodIndex',
                         'KeySchema': [
                             {
-                                'AttributeName': 'Code',
+                                'AttributeName': 'Entity',
                                 'KeyType': 'HASH'
                             },
                             {
-                                'AttributeName': 'Username',
+                                'AttributeName': 'Year',
                                 'KeyType': 'RANGE'
                             }
                         ],
@@ -158,25 +166,25 @@ def index_post_table():
 def create_post_table():
     try:
         response = dynamodb_client.create_table(
-            TableName="posts",
+            TableName="food",
             KeySchema=[
                 {
-                    'AttributeName': 'Code',
+                    'AttributeName': 'Entity',
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'Username',
+                    'AttributeName': 'Year',
                     'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'Code',
+                    'AttributeName': 'Entity',
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'Username',
-                    'AttributeType': 'S'
+                    'AttributeName': 'Year',
+                    'AttributeType': 'N'
                 }
             ],
             ProvisionedThroughput={
