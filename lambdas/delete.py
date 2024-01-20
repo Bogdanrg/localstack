@@ -1,3 +1,4 @@
+import decimal
 import json
 import logging
 import os
@@ -10,6 +11,16 @@ logging.basicConfig(level=logging.INFO,
 
 dynamodb = boto3.resource('dynamodb', endpoint_url=os.environ.get("DYNAMODB_URL"))
 client = boto3.client('lambda')
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            if o % 1 > 0:
+                return float(o)
+            else:
+                return int(o)
+        return super(DecimalEncoder, self).default(o)
 
 
 def delete(event, context):
@@ -36,8 +47,8 @@ def delete(event, context):
         }
     response = table.delete_item(
         Key={
-            "Code": data["code"],
-            "Username": data["name"]
+            "Entity": data["entity"],
+            "Year": data["year"]
         },
         ReturnValues='ALL_OLD'
     )
@@ -53,7 +64,7 @@ def delete(event, context):
                 'context': {
                     "item": response["Attributes"]
                 }
-            }),
+            }, cls=DecimalEncoder),
             "isBase64Encoded": False
         }
     return {
