@@ -1,0 +1,14 @@
+awslocal lambda create-function --runtime python3.11 --zip-file fileb://auth.zip --function-name auth --handler lambdas.authorizer.handler --role arn:aws:iam::000000000000:role/lambda-role --environment Variables={DYNAMODB_URL=http://localstack:4566,USER_TABLE=users,FOOD_TABLE=food}
+awslocal lambda create-function-url-config --function-name auth --auth-type NONE
+awslocal apigateway create-rest-api --name 'crud'
+awslocal apigateway get-resources --rest-api-id <REST_API_ID>
+awslocal apigateway create-resource --rest-api-id <REST_API_ID> --parent-id <PARENT_ID> --path-part "{somethingId}"
+awslocal apigateway put-method --rest-api-id <REST_API_ID> --resource-id <RESOURCE_ID> --http-method GET --request-parameters "method.request.path.somethingId=true" --authorization-type "NONE"
+awslocal apigateway put-integration \
+  --rest-api-id <REST_API_ID> \
+  --resource-id <RESOURCE_ID> \
+  --http-method GET \
+  --type AWS_PROXY \
+  --integration-http-method POST \
+  --uri arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:apigw-lambda/invocations \
+  --passthrough-behavior WHEN_NO_MATCH

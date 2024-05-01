@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME-localstack-main}"
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
+    environment:
+      - DEBUG=0
+      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=20
+      - PROVIDER_OVERRIDE_LAMBDA=asf
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_HOSTNAME=localstack
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
